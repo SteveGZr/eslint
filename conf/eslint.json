@@ -1,4 +1,5 @@
 {
+    "parser": "espree",
     "ecmaFeatures": {},
     "rules": {
         "no-alert": 0,
@@ -98,6 +99,7 @@
         "no-unused-vars": [2, {"vars": "all", "args": "after-used"}],
         "no-use-before-define": 0,
         "no-useless-call": 0,
+        "no-useless-concat": 0,
         "no-void": 0,
         "no-var": 0,
         "no-warning-comments": [0, { "terms": ["todo", "fixme", "xxx"], "location": "start" }],
@@ -129,6 +131,7 @@
         "func-names": 0,
         "func-style": [0, "declaration"],
         "generator-star-spacing": 0,
+        "global-require": 0,
         "guard-for-in": 0,
         "handle-callback-err": 0,
         "id-length": 0,

@@ -1,6 +1,6 @@
 # Require Camelcase (camelcase)
 
-When it comes to naming variables, styleguides generally fall into one of two camps: camelcased (`variableName`) and underscores(`variable_name`). This rule focuses on using the camelcase approach. If your styleguide calls for camelcasing your variable names, then this rule is for you!
+When it comes to naming variables, styleguides generally fall into one of two camps: camelcase (`variableName`) and underscores (`variable_name`). This rule focuses on using the camelcase approach. If your styleguide calls for camelcasing your variable names, then this rule is for you!
 
 ## Rule Details
 
@@ -23,7 +23,7 @@ This rule accepts a single options argument with the following defaults:
 1. `always` is the default and checks all property names
 2. `never` does not check property names at all
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint camelcase: 2*/
@@ -42,7 +42,7 @@ var obj = {
 };
 ```
 
-The following patterns are considered okay and do not cause warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint camelcase: 2*/

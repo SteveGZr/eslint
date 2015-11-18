@@ -28,8 +28,10 @@ The most important method on `linter` is `verify()`, which initiates linting of 
 
 * `code` - the source code to lint (a string or instance of `SourceCode`).
 * `config` - a configuration object.
-* `filename` - (optional) the filename to associate with the source code.
-* `saveState` - (optional) set to true to maintain the internal state of `linter` after linting (mostly used for testing purposes).
+* `options` - (optional) Additional options for this run.
+    * `filename` - (optional) the filename to associate with the source code.
+    * `saveState` - (optional) set to true to maintain the internal state of `linter` after linting (mostly used for testing purposes).
+    * `allowInlineConfig` - (optional) set to `false` to disable inline comments from changing eslint rules.
 
 You can call `verify()` like this:
 
@@ -40,7 +42,7 @@ var messages = linter.verify("var foo;", {
     rules: {
         semi: 2
     }
-}, "foo.js");
+}, { filename: "foo.js" });
 
 // or using SourceCode
 
@@ -53,7 +55,7 @@ var messages = linter.verify(code, {
     rules: {
         semi: 2
     }
-}, "foo.js");
+}, { filename: "foo.js" });
 ```
 
 The `verify()` method returns an array of objects containing information about the linting warnings and errors. Here's an example:
@@ -66,7 +68,11 @@ The `verify()` method returns an array of objects containing information about t
     severity: 2,
     line: 1,
     column: 23,
-    message: "Expected a semicolon."
+    message: "Expected a semicolon.",
+    fix: {
+        range: [1, 15],
+        text: ";"
+    }
 }
 ```
 
@@ -80,6 +86,7 @@ The information available for each linting message is:
 * `ruleId` - the ID of the rule that triggered the messages (or null if `fatal` is true).
 * `severity` - either 1 or 2, depending on your configuration.
 * `source` - the line of code where the problem is (or empty string if it can't be found).
+* `fix` - an object describing the fix for the problem (this property is omitted if no fix is available).
 
 You can also get an instance of the `SourceCode` object used inside of `linter` by using the `getSourceCode()` method:
 
@@ -90,7 +97,7 @@ var messages = linter.verify("var foo = bar;", {
     rules: {
         semi: 2
     }
-}, "foo.js");
+}, { filename: "foo.js" });
 
 var code = linter.getSourceCode();
 
@@ -115,13 +122,18 @@ The `CLIEngine` is a constructor, and you can create a new instance by passing i
 * `envs` - An array of environments to load (default: empty array). Corresponds to `--env`.
 * `extensions` - An array of filename extensions that should be checked for code. The default is an array containing just `".js"`. Corresponds to `--ext`.
 * `globals` - An array of global variables to declare (default: empty array). Corresponds to `--global`.
+* `fix` - True indicates that fixes should be applied to the text when possible.
 * `ignore` - False disables use of `.eslintignore` (default: true). Corresponds to `--no-ignore`.
 * `ignorePath` - The ignore file to use instead of `.eslintignore` (default: null). Corresponds to `--ignore-path`.
+* `ignorePattern` - Glob patterns for paths to ignore. String or array of strings.
 * `baseConfig` - Set to false to disable use of base config. Could be set to an object to override default base config as well.
 * `rulePaths` - An array of directories to load custom rules from (default: empty array). Corresponds to `--rulesdir`.
 * `rules` - An object of rules to use (default: null). Corresponds to `--rule`.
 * `useEslintrc` - Set to false to disable use of `.eslintrc` files (default: true). Corresponds to `--no-eslintrc`.
 * `parser` - Specify the parser to be used (default: `espree`). Corresponds to `--parser`.
+* `cache` - Operate only on changed files (default: `false`). Corresponds to `--cache`.
+* `cacheFile` - Name of the file where the cache will be stored (default: `.eslintcache`). Corresponds to `--cache-file`. Deprecated: use `cacheLocation` instead.
+* `cacheLocation` - Name of the file or directory where the cache will be stored (default: `.eslintcache`). Correspond to `--cache-location`
 
 For example:
 
@@ -165,6 +177,7 @@ The return value is an object containing the results of the linting operation. H
     results: [
         {
             filePath: "./myfile.js",
+            output: "foo;",
             messages: [
                 {
                     fatal: false,
@@ -185,9 +198,24 @@ The return value is an object containing the results of the linting operation. H
 }
 ```
 
-The top-level report object has a `results` array containing all linting results for files that had warnings or errors (any files that did not produce a warning or error are omitted). Each file result includes the `filePath`, a `messages` array, `errorCount` and `warningCount`. The `messages` array contains the result of calling `linter.verify()` on the given file. The `errorCount` and `warningCount` give the exact number of errors and warnings respectively on the given file. The top-level report object also has `errorCount` and `warningCount` which give the exact number of errors and warnings respectively on all the files.
+The top-level report object has a `results` array containing all linting results for files that had warnings or errors (any files that did not produce a warning or error are omitted). Each file result includes the `filePath`, a `messages` array, `errorCount`, `warningCount`, and optionally `output`. The `messages` array contains the result of calling `linter.verify()` on the given file. The `errorCount` and `warningCount` give the exact number of errors and warnings respectively on the given file. The `output` property gives the source code for the file with as many fixes applied as possible, so you can use that to rewrite the files if necessary. The top-level report object also has `errorCount` and `warningCount` which give the exact number of errors and warnings respectively on all the files.
 
 Once you get a report object, it's up to you to determine how to output the results.
+
+### resolveFileGlobPatterns()
+
+You can pass filesystem-style or glob patterns to ESLint and have it function properly. In order to achieve this, ESLint must resolve non-glob patterns into glob patterns before determining which files to execute on. The `resolveFileGlobPatterns()` methods uses the current settings from `CLIEngine` to resolve non-glob patterns into glob patterns. Pass an array of patterns that might be passed to the ESLint CLI and it will return an array of glob patterns that mean the same thing. Here's an example:
+
+```js
+var CLIEngine = require("eslint").CLIEngine;
+
+var cli = new CLIEngine({
+});
+
+// pass an array of patterns
+var globPatterns = cli.resolveFileGlobPatterns(["."]);
+console.log(globPatterns[i]);       // ["**/*.js"]
+```
 
 ### getConfigForFile()
 
@@ -288,7 +316,19 @@ var isIgnored = cli.isPathIgnored("foo/bar.js");
 
 ### getFormatter()
 
-Retrieves a formatter, which you can then use to format a report object. The argument is either the name of a built-in formatter ("stylish" (the default), "compact", "checkstyle", "jslint-xml", "junit", "json" and "tap") or the full path to a JavaScript file containing a custom formatter. You can also omit the argument to retrieve the default formatter.
+Retrieves a formatter, which you can then use to format a report object. The argument is either the name of a built-in formatter:
+
+* "[stylish](./user-guide/formatters#stylish)" (the default)
+* "[checkstyle](./user-guide/formatters#checkstyle)"
+* "[compact](./user-guide/formatters#compact)"
+* "[html](./user-guide/formatters#html)"
+* "[jslint-xml](./user-guide/formatters#jslint-xml)"
+* "[json](./user-guide/formatters#json)"
+* "[junit](./user-guide/formatters#junit)"
+* "[tap](./user-guide/formatters#tap)"
+* "[unix](./user-guide/formatters#unix)"
+
+or the full path to a JavaScript file containing a custom formatter. You can also omit the argument to retrieve the default formatter.
 
 ```js
 var CLIEngine = require("eslint").CLIEngine;
@@ -347,6 +387,28 @@ var errorReport = CLIEngine.getErrorResults(report.results)
 ```
 
 **Important:** You must pass in the `results` property of the report. Passing in `report` directly will result in an error.
+
+### outputFixes()
+
+This is a static function on `CLIEngine` that is used to output fixes from `report` to disk. It does by looking for files that have an `output` property in their results. Here's an example:
+
+```js
+var CLIEngine = require("eslint").CLIEngine;
+
+var cli = new CLIEngine({
+    envs: ["browser", "mocha"],
+    useEslintrc: false,
+    rules: {
+        semi: 2
+    }
+});
+
+// lint myfile.js and all files in lib/
+var report = cli.executeOnFiles(["myfile.js", "lib/"]);
+
+// output fixes to disk
+CLIEngine.outputFixes(report);
+```
 
 ## Deprecated APIs
 

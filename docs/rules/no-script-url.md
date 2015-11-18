@@ -4,10 +4,12 @@ Using `javascript:` URLs is considered by some as a form of `eval`. Code passed 
 
 ## Rule Details
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
-location.href = "javascript:void(0)";
+/*eslint no-script-url: 2*/
+
+location.href = "javascript:void(0)"; /*error Script URL is a form of eval.*/
 ```
 
 ## Compatibility

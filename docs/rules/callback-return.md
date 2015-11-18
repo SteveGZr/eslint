@@ -1,6 +1,6 @@
 # Enforce Return After Callback (callback-return)
 
-The callback pattern is at the heart most I/O and event-driven programming
+The callback pattern is at the heart of most I/O and event-driven programming
  in JavaScript.
 
 ```js
@@ -14,7 +14,7 @@ function doSomething(err, callback) {
 
 To prevent calling the callback multiple times it is important to `return` anytime the callback is triggered outside
  of the main function body. Neglecting this technique often leads to issues where you do something more than once.
- For example in the case of an HTTP request, you may try to send HTTP headers more than once leading node.js to `throw`
+ For example, in the case of an HTTP request, you may try to send HTTP headers more than once leading node.js to `throw`
  a `Can't render headers after they are sent to the client.` error.
 
 ## Rule Details
@@ -23,7 +23,7 @@ This rule is aimed at ensuring that callbacks used outside of the main function 
 preceding a `return` statement. This rules decides what is a callback based on the name of the function being called.
 By default the rule treats `cb`, `callback`, and `next` as callbacks.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint callback-return: 2*/
@@ -36,7 +36,7 @@ function foo() {
 }
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint callback-return: 2*/

@@ -4,6 +4,8 @@ If there are declarations of the same name in class members, the last declaratio
 It can cause unexpected behaviors.
 
 ```js
+/*eslint-env es6*/
+
 class Foo {
   bar() { console.log("hello"); }
   bar() { console.log("goodbye"); }
@@ -17,10 +19,11 @@ foo.bar(); // goodbye
 
 This rule is aimed to flag the use of duplicate names in class members.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint no-dupe-class-members: 2*/
+/*eslint-env es6*/
 
 class Foo {
   bar() { }
@@ -38,10 +41,11 @@ class Foo {
 }
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint no-dupe-class-members: 2*/
+/*eslint-env es6*/
 
 class Foo {
   bar() { }

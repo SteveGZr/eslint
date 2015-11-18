@@ -9,16 +9,21 @@ Arrow functions are suited to callbacks, because:
 
 This rule is aimed to flag usage of function expressions in an argument list.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
-foo(function(a) { return a; });
-foo(function() { return this.a; }.bind(this));
+/*eslint prefer-arrow-callback: 2*/
+
+foo(function(a) { return a; });                /*error Unexpected function expression.*/
+foo(function() { return this.a; }.bind(this)); /*error Unexpected function expression.*/
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
+/*eslint prefer-arrow-callback: 2*/
+/*eslint-env es6*/
+
 foo(a => a);
 foo(function*() { yield; });
 

@@ -18,6 +18,11 @@ var rule = require("../../../lib/rules/no-unused-vars"),
 
 var ruleTester = new RuleTester();
 ruleTester.defineRule("use-every-a", function(context) {
+    /**
+     * Mark a variable as used
+     * @returns {void}
+     * @private
+     */
     function useA() {
         context.markVariableAsUsed("a");
     }
@@ -163,6 +168,102 @@ ruleTester.run("no-unused-vars", rule, {
         { code: "var a; function foo() { var _b; var c_; } foo();", options: [ { vars: "local", varsIgnorePattern: "^_" } ], errors: [{ message: "\"c_\" is defined but never used", line: 1, column: 37 }] },
         { code: "function foo(a, _b) { } foo();", options: [ { args: "all", argsIgnorePattern: "^_" } ], errors: [{ message: "\"a\" is defined but never used", line: 1, column: 14 }] },
         { code: "function foo(a, _b, c) { return a; } foo();", options: [ { args: "after-used", argsIgnorePattern: "^_" } ], errors: [{ message: "\"c\" is defined but never used", line: 1, column: 21 }] },
-        { code: "var [ firstItemIgnored, secondItem ] = items;", ecmaFeatures: {destructuring: true}, options: [ { vars: "all", varsIgnorePattern: "[iI]gnored" } ], errors: [{ message: "\"secondItem\" is defined but never used", line: 1, column: 25 }] }
+        { code: "var [ firstItemIgnored, secondItem ] = items;", ecmaFeatures: {destructuring: true}, options: [ { vars: "all", varsIgnorePattern: "[iI]gnored" } ], errors: [{ message: "\"secondItem\" is defined but never used", line: 1, column: 25 }] },
+
+        // https://github.com/eslint/eslint/issues/3617
+        {
+            code: "\n/* global foobar, foo, bar */\nfoobar;",
+            errors: [
+                {line: 2, column: 19, message: "\"foo\" is defined but never used" },
+                {line: 2, column: 24, message: "\"bar\" is defined but never used" }
+            ]
+        },
+        {
+            code: "\n/* global foobar,\n   foo,\n   bar\n */\nfoobar;",
+            errors: [
+                {line: 3, column: 4, message: "\"foo\" is defined but never used" },
+                {line: 4, column: 4, message: "\"bar\" is defined but never used" }
+            ]
+        },
+
+        // https://github.com/eslint/eslint/issues/3714
+        {
+            code: "/* global a$fooz,$foo */\na$fooz;",
+            errors: [
+                {line: 1, column: 18, message: "\"$foo\" is defined but never used" }
+            ]
+        },
+        {
+            code: "/* globals a$fooz, $ */\na$fooz;",
+            errors: [
+                {line: 1, column: 20, message: "\"$\" is defined but never used" }
+            ]
+        },
+        {
+            code: "/*globals $foo*/",
+            errors: [
+                {line: 1, column: 11, message: "\"$foo\" is defined but never used" }
+            ]
+        },
+        {
+            code: "/* global global*/",
+            errors: [
+                {line: 1, column: 11, message: "\"global\" is defined but never used" }
+            ]
+        },
+        {
+            code: "/*global foo:true*/",
+            errors: [
+                {line: 1, column: 10, message: "\"foo\" is defined but never used" }
+            ]
+        },
+        // non ascii.
+        {
+            code: "/*global 変数, 数*/\n変数;",
+            errors: [
+                {line: 1, column: 14, message: "\"数\" is defined but never used" }
+            ]
+        },
+        // surrogate pair.
+        // TODO: https://github.com/eslint/espree/issues/181
+        // {
+        //     code: "/*global 𠮷𩸽, 𠮷*/\n\\u{20BB7}\\u{29E3D};",
+        //     env: {es6: true},
+        //     errors: [
+        //         {line: 1, column: 16, message: "\"𠮷\" is defined but never used" }
+        //     ]
+        // }
+
+        // https://github.com/eslint/eslint/issues/4047
+        {
+            code: "export default function(a) {}",
+            ecmaFeatures: {modules: true},
+            errors: [{message: "\"a\" is defined but never used"}]
+        },
+        {
+            code: "export default function(a, b) { console.log(a); }",
+            ecmaFeatures: {modules: true},
+            errors: [{message: "\"b\" is defined but never used"}]
+        },
+        {
+            code: "export default (function(a) {});",
+            ecmaFeatures: {modules: true},
+            errors: [{message: "\"a\" is defined but never used"}]
+        },
+        {
+            code: "export default (function(a, b) { console.log(a); });",
+            ecmaFeatures: {modules: true},
+            errors: [{message: "\"b\" is defined but never used"}]
+        },
+        {
+            code: "export default (a) => {};",
+            ecmaFeatures: {modules: true, arrowFunctions: true},
+            errors: [{message: "\"a\" is defined but never used"}]
+        },
+        {
+            code: "export default (a, b) => { console.log(a); };",
+            ecmaFeatures: {modules: true, arrowFunctions: true},
+            errors: [{message: "\"b\" is defined but never used"}]
+        }
     ]
 });

@@ -150,6 +150,24 @@ ruleTester.run("key-spacing", rule, {
             afterColon: true
         }]
     }, {
+        code: [
+            "obj = { key ",
+            "    :     ",
+            " longName };"
+        ].join("\n"),
+        options: [{
+            beforeColon: true,
+            afterColon: false,
+            mode: "minimum"
+        }]
+    }, {
+        code: "obj = { key     :      longName };",
+        options: [{
+            beforeColon: true,
+            afterColon: false,
+            mode: "minimum"
+        }]
+    }, {
         code: "var obj = { get fn() { return 42; } };",
         options: [{}]
     }, {
@@ -165,7 +183,7 @@ ruleTester.run("key-spacing", rule, {
         code: [
             "var x = {",
             "    foo: 10",
-            "    , b: 20",
+            "  , b  : 20",
             "};"
         ].join("\n"),
         options: [{ align: "colon" }]
@@ -173,7 +191,7 @@ ruleTester.run("key-spacing", rule, {
         code: [
             "var x = {",
             "    foo : 10",
-            "    , b : 20",
+            "  , b   : 20",
             "};"
         ].join("\n"),
         options: [{ align: "colon", beforeColon: true }]
@@ -197,6 +215,104 @@ ruleTester.run("key-spacing", rule, {
         ].join("\n"),
         ecmaFeatures: { modules: true, objectLiteralShorthandProperties: true },
         options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var test = {",
+            "    prop: 123,",
+            "    a,",
+            "    b",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandProperties: true }
+    }, {
+        code: [
+            "var test = {",
+            "    prop: 456,",
+            "    c,",
+            "    d",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandProperties: true },
+        options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    prop,",
+            "    baz:    456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandProperties: true },
+        options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var test = {",
+            "    prop: 123,",
+            "    a() { }",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true }
+    }, {
+        code: [
+            "var test = {",
+            "    prop: 123,",
+            "    a() { },",
+            "    b() { }",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    method() { },",
+            "    baz:    456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    method() {",
+            "        return 42;",
+            "    },",
+            "    baz: 456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }]
+    }, {
+        code: [
+            "var obj = {",
+            "    foo : foo",
+            "  , bar : bar",
+            "  , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }]
+    }, {
+        code: [
+            "var obj = { foo : foo",
+            "          , bar : bar",
+            "          , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }]
+    }, {
+        code: [
+            "var obj = {",
+            "    foo :  foo",
+            "  , bar :  bar",
+            "  , cats : cats",
+            "};"
+        ].join("\n"),
+        options: [{
+            "align": "value",
+            "beforeColon": true
+        }]
     }],
 
     invalid: [{
@@ -397,7 +513,7 @@ ruleTester.run("key-spacing", rule, {
         code: [
             "var x = {",
             "    foo: 10",
-            "  , b  : 20",
+            "  , b   : 20",
             "};"
         ].join("\n"),
         options: [{ align: "colon" }],
@@ -415,6 +531,156 @@ ruleTester.run("key-spacing", rule, {
         errors: [
             { message: "Missing space after key \"b\".", line: 3, column: 11, type: "Identifier" }
         ]
+    }, {
+        code: [
+            "obj = { key ",
+            " :     longName };"
+        ].join("\n"),
+        options: [{
+            beforeColon: true,
+            afterColon: true
+        }],
+        errors: [
+            { message: "Extra space before value for key \"key\".", line: 2, column: 8, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    prop,",
+            "    baz: 456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandProperties: true },
+        options: [{ "align": "value" }],
+        errors: [
+            { message: "Missing space before value for key \"baz\".", line: 4, column: 10, type: "Literal" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar:  123,",
+            "    prop,",
+            "    baz:    456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandProperties: true },
+        options: [{ "align": "value" }],
+        errors: [
+            { message: "Extra space before value for key \"foobar\".", line: 2, column: 14, type: "Literal" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    method() { },",
+            "    baz: 456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }],
+        errors: [
+            { message: "Missing space before value for key \"baz\".", line: 4, column: 10, type: "Literal" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar:  123,",
+            "    method() { },",
+            "    baz:    456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }],
+        errors: [
+            { message: "Extra space before value for key \"foobar\".", line: 2, column: 14, type: "Literal" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foobar: 123,",
+            "    method() {",
+            "        return 42;",
+            "    },",
+            "    baz:    456",
+            "};"
+        ].join("\n"),
+        ecmaFeatures: { objectLiteralShorthandMethods: true },
+        options: [{ "align": "value" }],
+        errors: [
+            { message: "Extra space before value for key \"baz\".", line: 6, column: 13, type: "Literal" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foo: foo",
+            "  , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Missing space after key \"foo\".", line: 2, column: 5, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = {",
+            "    foo : foo",
+            "  , cats:  cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Extra space before value for key \"cats\".", line: 3, column: 12, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = { foo: foo",
+            "          , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Missing space after key \"foo\".", line: 1, column: 13, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = { foo  : foo",
+            "          , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Extra space after key \"foo\".", line: 1, column: 13, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = { foo :foo",
+            "          , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Missing space before value for key \"foo\".", line: 1, column: 18, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = { foo :  foo",
+            "          , cats: cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Extra space before value for key \"foo\".", line: 1, column: 20, type: "Identifier" }
+        ]
+    }, {
+        code: [
+            "var obj = { foo : foo",
+            "          , cats:  cats",
+            "};"
+        ].join("\n"),
+        options: [{ "align": "colon" }],
+        errors: [
+            { message: "Extra space before value for key \"cats\".", line: 2, column: 20, type: "Identifier" }
+        ]
     }]
-
 });

@@ -3,7 +3,7 @@
 ESLint is designed to be completely configurable, meaning you can turn off every rule and run only with basic syntax validation, or mix and match the bundled rules and your custom rules to make ESLint perfect for your project. There are two primary ways to configure ESLint:
 
 1. **Configuration Comments** - use JavaScript comments to embed configuration information directly into a file.
-1. **Configuration Files** - use a JSON or YAML file to specify configuration information for an entire directory and all of its subdirectories. This can be in the form of an `.eslintrc` file or an `eslintConfig` field in a `package.json` file, both of which ESLint will look for and read automatically, or you can specify a configuration file on the [command line](command-line-interface).
+1. **Configuration Files** - use a JavaScript, JSON or YAML file to specify configuration information for an entire directory and all of its subdirectories. This can be in the form of an `.eslintrc` file or an `eslintConfig` field in a `package.json` file, both of which ESLint will look for and read automatically, or you can specify a configuration file on the [command line](command-line-interface).
 
 There are several pieces of information that can be configured:
 
@@ -111,8 +111,10 @@ An environment defines global variables that are predefined. The available envir
 * `meteor` - Meteor global variables.
 * `mongo` - MongoDB global variables.
 * `applescript` - AppleScript global variables.
+* `nashorn` - Java 8 Nashorn global variables.
 * `serviceworker` - Service Worker global variables.
 * `embertest` - Ember test helper globals.
+* `webextensions` - WebExtensions globals.
 * `es6` - enable all ECMAScript 6 features except for modules.
 
 These environments are not mutually exclusive, so you can define more than one at a time.
@@ -224,7 +226,7 @@ And in YAML:
     - eslint-plugin-plugin2
 ```
 
-**Note:** A globally-installed instance of ESLint can only use globally-installed ESLint plugins. A locally-installed ESLint can make sure of both locally- and globally- installed ESLint plugins.
+**Note:** A globally-installed instance of ESLint can only use globally-installed ESLint plugins. A locally-installed ESLint can make use of both locally- and globally- installed ESLint plugins.
 
 ## Configuring Rules
 
@@ -380,6 +382,25 @@ The second way to use configuration files is via `.eslintrc` and `package.json` 
 
 In each case, the settings in the configuration file override default settings.
 
+## Configuration File Formats
+
+ESLint supports configuration files in several formats:
+
+* **JavaScript** - use `.eslintrc.js` and export an object containing your configuration.
+* **YAML** - use `.eslintrc.yaml` or `.eslintrc.yml` to define the configuration structure.
+* **JSON** - use `.eslintrc.json` to define the configuration structure. ESLint's JSON files also allow JavaScript-style comments.
+* **package.json** - create an `eslintConfig` property in your `package.json` file and define your configuration there.
+* **Deprecated** - use `.eslintrc`, which can be either JSON or YAML.
+
+If there are multiple `.eslintrc.*` files in the same directory, ESLint will only use one. The priority order is:
+
+1. `.eslintrc.js`
+1. `.eslintrc.yaml`
+1. `.eslintrc.yml`
+1. `.eslintrc.json`
+1. `.eslintrc`
+
+
 ## Configuration Cascading and Hierarchy
 
 When using `.eslintrc` and `package.json` files for configuration, you can take advantage of configuration cascading. For instance, suppose you have the following structure:
@@ -460,7 +481,14 @@ The complete configuration hierarchy, from highest precedence to lowest preceden
 
 If you want to extend a specific configuration file, you can use the `extends` property and specify the path to the file. The path can be either relative or absolute.
 
-The extended configuration provides base rules, which can be overriden by the configuration that references it. For example:
+Configurations can be extended by using:
+
+1. YAML file
+1. JSON file
+1. JS file
+1. Shareable configuration package
+
+The extended configuration provides base rules, which can be overridden by the configuration that references it. For example:
 
 ```js
 {
@@ -478,8 +506,8 @@ Configurations may also be provided as an array, with additional files overridin
 ```js
 {
     "extends": [
-        "./node_modules/coding-standard/.eslintrc-defaults",
-        // Override .eslintrc-defaults
+        "./node_modules/coding-standard/eslintDefaults.js",
+        // Override eslintDefaults.js
         "./node_modules/coding-standard/.eslintrc-es6",
         // Override .eslintrc-es6
         "./node_modules/coding-standard/.eslintrc-jsx",
@@ -569,7 +597,7 @@ You can also use your `.gitignore` file:
 
     eslint --ignore-path .gitignore file.js
 
-Any file that follows the standard ignore file format can be used. Keep in mind that specifying `--ignore-path` means that any existing `.eslintignore` file will not be used.
+Any file that follows the standard ignore file format can be used. Keep in mind that specifying `--ignore-path` means that any existing `.eslintignore` file will not be used. Note that globbing rules in .eslintignore are more strict than in .gitignore. See all supported patterns in [minimatch docs](https://github.com/isaacs/minimatch)
 
 ### Ignored File Warnings
 

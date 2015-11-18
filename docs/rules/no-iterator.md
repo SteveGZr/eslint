@@ -14,22 +14,26 @@ You should use ECMAScript 6 iterators and generators instead.
 
 This rule is aimed at preventing errors that may arise from using the `__iterator__` property, which is not implemented in several browsers. As such, it will warn whenever it encounters the `__iterator__` property.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
-Foo.prototype.__iterator__ = function() {
+/*eslint no-iterator: 2*/
+
+Foo.prototype.__iterator__ = function() { /*error Reserved name '__iterator__'.*/
     return new FooIterator(this);
 };
 
-foo.__iterator__ = function () {};
+foo.__iterator__ = function () {};        /*error Reserved name '__iterator__'.*/
 
-foo["__iterator__"] = function () {};
+foo["__iterator__"] = function () {};     /*error Reserved name '__iterator__'.*/
 
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
+/*eslint no-iterator: 2*/
+
 var __iterator__ = foo; // Not using the `__iterator__` property.
 ```
 

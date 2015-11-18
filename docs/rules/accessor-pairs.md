@@ -1,6 +1,7 @@
 # Enforces getter/setter pairs in objects (accessor-pairs)
 
-It's a common mistake in JavaScript to create an object with just setter but never have a getter defined for it. If you have a setter but no corresponding getter then you can never get the value. So it ends up not getting used as you can only set the value and never get the value.
+It's a common mistake in JavaScript to create an object with just a setter for a property but never have a corresponding getter defined for it. Without a getter, you cannot read the property, so it ends up not being used.
+
 Here are some examples:
 
 ```js
@@ -27,7 +28,9 @@ This rule warns if setters are defined without getters. Using an option `getWith
 
 ## Rule Details
 
-This rule enforces a style where it requires to have a getter for every object which has a setter defined. By activating the below option it enforces vice-versa behaviour also.
+This rule enforces a style where it requires to have a getter for every property which has a setter defined.
+
+By activating the option `getWithoutSet` it enforces the presence of a setter for every property which has a getter defined.
 
 ### Options
 
@@ -44,7 +47,7 @@ By default `setWithoutGet` option is always set to `true`.
 }
 ```
 
-The following patterns are considered warnings by default:
+The following patterns are considered problems by default:
 
 ```js
 /*eslint accessor-pairs: 2*/
@@ -63,7 +66,7 @@ Object.defineProperty(o, 'c', { /*error Getter is not present*/
 });
 ```
 
-The following patterns are not considered warnings by default:
+The following patterns are not considered problems by default:
 
 ```js
 /*eslint accessor-pairs: 2*/
@@ -91,7 +94,7 @@ Object.defineProperty(o, 'c', {
 
 #### getWithoutSet
 
-The following patterns are considered warnings with option `getWithoutSet` set:
+The following patterns are considered problems with option `getWithoutSet` set:
 
 ```js
 /*eslint accessor-pairs: [2, { getWithoutSet: true }]*/
@@ -123,7 +126,7 @@ Object.defineProperty(o, 'c', { /*error Setter is not present*/
 });
 ```
 
-The following patterns are not considered warnings by option `getWithoutSet` set:
+The following patterns are not considered problems with option `getWithoutSet` set:
 
 ```js
 /*eslint accessor-pairs: [2, { getWithoutSet: true }]*/
@@ -150,7 +153,7 @@ Object.defineProperty(o, 'c', {
 
 ## When Not To Use It
 
-You can turn this rule off if you are not concerned with the presence of setters or getters on objects.
+You can turn this rule off if you are not concerned with the simultaneous presence of setters and getters on objects.
 
 ## Further Reading
 

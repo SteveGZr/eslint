@@ -19,43 +19,43 @@ This rule takes one option, an object, with a property `"props"`.
 * `props` (`false` by default) - If `true` is set, this rule warns modifying of properties of parameters.
 
 
-### The following patterns are considered warnings:
+### The following patterns are considered problems:
 
 ```js
+/*eslint no-param-reassign: 2*/
+
 function foo(bar) {
-    bar = 13;
+    bar = 13;       /*error Assignment to function parameter 'bar'.*/
 }
-```
 
-```js
 function foo(bar) {
-    bar++;
+    bar++;          /*error Assignment to function parameter 'bar'.*/
 }
 ```
 
 When `{"props": true}`:
 
 ```js
+/*eslint no-param-reassign: [2, { "props": true }]*/
+
 function foo(bar) {
-    bar.prop = "value";
+    bar.prop = "value"; /*error Assignment to function parameter 'bar'.*/
+}
+
+function foo(bar) {
+    delete bar.aaa;     /*error Assignment to function parameter 'bar'.*/
+}
+
+function foo(bar) {
+    bar.aaa++;          /*error Assignment to function parameter 'bar'.*/
 }
 ```
 
-```js
-function foo(bar) {
-    delete bar.aaa;
-}
-```
+### The following patterns are not considered problems:
 
 ```js
-function foo(bar) {
-    bar.aaa++;
-}
-```
+/*eslint no-param-reassign: 2*/
 
-### The following patterns are not warnings:
-
-```js
 function foo(a) {
     var b = a;
 }
@@ -64,18 +64,16 @@ function foo(a) {
 When `{"props": false}`:
 
 ```js
+/*eslint no-param-reassign: [2, { "props": false }]*/
+
 function foo(bar) {
     bar.prop = "value";
 }
-```
 
-```js
 function foo(bar) {
     delete bar.aaa;
 }
-```
 
-```js
 function foo(bar) {
     bar.aaa++;
 }

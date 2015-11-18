@@ -13,6 +13,7 @@
 var assert = require("chai").assert,
     espree = require("espree"),
     sinon = require("sinon"),
+    leche = require("leche"),
     eslint = require("../../../lib/eslint"),
     SourceCode = require("../../../lib/util/source-code");
 
@@ -93,8 +94,24 @@ describe("SourceCode", function() {
             }, /missing range information/);
         });
 
+        it("should store all tokens and comments sorted by range", function() {
+            var comments = [
+                { range: [0, 2] },
+                { range: [10, 12] }
+            ];
+            var tokens = [
+                { range: [3, 8] },
+                { range: [8, 10] },
+                { range: [12, 20] }
+            ];
+            var sourceCode = new SourceCode("", { comments: comments, tokens: tokens, loc: {}, range: [] });
 
+            var actual = sourceCode.tokensAndComments;
+            var expected = [comments[0], tokens[0], tokens[1], comments[1], tokens[2]];
+            assert.deepEqual(actual, expected);
+        });
     });
+
 
     describe("getJSDocComment()", function() {
 
@@ -116,6 +133,39 @@ describe("SourceCode", function() {
                 "function Foo(){var t = function(){}}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
+            function assertJSDoc(node) {
+                var sourceCode = eslint.getSourceCode();
+                var jsdoc = sourceCode.getJSDocComment(node);
+                assert.equal(jsdoc, null);
+            }
+
+            var spy = sandbox.spy(assertJSDoc);
+
+            eslint.on("FunctionExpression", spy);
+            eslint.verify(code, { rules: {}}, filename, true);
+            assert.isTrue(spy.calledOnce, "Event handler should be called.");
+
+        });
+
+        it("should not take a JSDoc comment from a VariableDeclaration parent node when the node is a FunctionExpression inside a NewExpression", function() {
+
+            var code = [
+                "/** Desc*/",
+                "var x = new Foo(function(){});"
+            ].join("\n");
+
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -137,6 +187,12 @@ describe("SourceCode", function() {
                 "var f = function(){var t = function(arg){}}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 if (node.params.length === 1) {
                     var sourceCode = eslint.getSourceCode();
@@ -160,6 +216,12 @@ describe("SourceCode", function() {
                 "function Foo(){}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -182,6 +244,12 @@ describe("SourceCode", function() {
                 "export function Foo(){}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -206,6 +274,12 @@ describe("SourceCode", function() {
                 "function Foo(){}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -231,6 +305,12 @@ describe("SourceCode", function() {
                 "}())"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -253,6 +333,12 @@ describe("SourceCode", function() {
                 "function Foo(){}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -278,6 +364,12 @@ describe("SourceCode", function() {
                 "}())"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -302,6 +394,12 @@ describe("SourceCode", function() {
                 "};"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -326,6 +424,12 @@ describe("SourceCode", function() {
                 "};"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -348,6 +452,12 @@ describe("SourceCode", function() {
                 "Foo.bar = function(){}"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 var sourceCode = eslint.getSourceCode();
                 var jsdoc = sourceCode.getJSDocComment(node);
@@ -372,6 +482,12 @@ describe("SourceCode", function() {
                 "}());"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 if (!node.id) {
                     var sourceCode = eslint.getSourceCode();
@@ -398,6 +514,12 @@ describe("SourceCode", function() {
                 "}());"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 if (!node.id) {
                     var sourceCode = eslint.getSourceCode();
@@ -421,6 +543,12 @@ describe("SourceCode", function() {
                 "}());"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 if (!node.id) {
                     var sourceCode = eslint.getSourceCode();
@@ -452,6 +580,12 @@ describe("SourceCode", function() {
                 "};"
             ].join("\n");
 
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
             function assertJSDoc(node) {
                 if (node.id) {
                     var sourceCode = eslint.getSourceCode();
@@ -467,6 +601,62 @@ describe("SourceCode", function() {
             assert.isTrue(spy.calledTwice, "Event handler should be called.");
         });
 
+        it("should get JSDoc comment for node when the node is a ClassExpression", function() {
+
+            var code = [
+                "/** Merges two objects together.*/",
+                "var A = class {",
+                "};"
+            ].join("\n");
+
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
+            function assertJSDoc(node) {
+                var sourceCode = eslint.getSourceCode();
+                var jsdoc = sourceCode.getJSDocComment(node);
+                assert.equal(jsdoc.type, "Block");
+                assert.equal(jsdoc.value, "* Merges two objects together.");
+            }
+
+            var spy = sandbox.spy(assertJSDoc);
+
+            eslint.on("ClassExpression", spy);
+            eslint.verify(code, { rules: {}, ecmaFeatures: {classes: true}}, filename, true);
+            assert.isTrue(spy.calledOnce, "Event handler should be called.");
+        });
+
+        it("should get JSDoc comment for node when the node is a ClassDeclaration", function() {
+
+            var code = [
+                "/** Merges two objects together.*/",
+                "class A {",
+                "};"
+            ].join("\n");
+
+            /**
+             * Check jsdoc presence
+             * @param {ASTNode} node not to check
+             * @returns {void}
+             * @private
+             */
+            function assertJSDoc(node) {
+                var sourceCode = eslint.getSourceCode();
+                var jsdoc = sourceCode.getJSDocComment(node);
+                assert.equal(jsdoc.type, "Block");
+                assert.equal(jsdoc.value, "* Merges two objects together.");
+            }
+
+            var spy = sandbox.spy(assertJSDoc);
+
+            eslint.on("ClassDeclaration", spy);
+            eslint.verify(code, { rules: {}, ecmaFeatures: {classes: true}}, filename, true);
+            assert.isTrue(spy.calledOnce, "Event handler should be called.");
+        });
+
     });
 
     describe("getComments()", function() {
@@ -477,6 +667,13 @@ describe("SourceCode", function() {
         ].join("\n");
 
         it("should attach them to all nodes", function() {
+            /**
+             * Check comment count
+             * @param {int} leading Leading comment count
+             * @param {int} trailing Trailing comment count
+             * @returns {Function} function to execute
+             * @private
+             */
             function assertCommentCount(leading, trailing) {
                 return function(node) {
                     var sourceCode = eslint.getSourceCode();
@@ -671,6 +868,36 @@ describe("SourceCode", function() {
 
     });
 
+    describe("isSpaceBetweenTokens()", function() {
+
+        leche.withData([
+            ["let foo = bar;", true],
+            ["let  foo = bar;", true],
+            ["let /**/ foo = bar;", true],
+            ["let/**/foo = bar;", false],
+            ["a+b", false],
+            ["a/**/+b", false],
+            ["a/* */+b", false],
+            ["a/**/ +b", true],
+            ["a/**/ /**/+b", true],
+            ["a/**/\n/**/+b", true],
+            ["a +b", true]
+        ], function(code, expected) {
+
+            it("should return true when there is one space between tokens", function() {
+                var ast = espree.parse(code, DEFAULT_CONFIG),
+                    sourceCode = new SourceCode(code, ast);
+
+                assert.equal(
+                    sourceCode.isSpaceBetweenTokens(
+                        sourceCode.ast.tokens[0], sourceCode.ast.tokens[1]
+                    ),
+                    expected
+                );
+            });
+        });
+    });
+
     // need to check that eslint.verify() works with SourceCode
 
     describe("eslint.verify()", function() {
@@ -681,14 +908,23 @@ describe("SourceCode", function() {
             }
         };
 
-        it("should work when passed a SourceCode object", function() {
+        it("should work when passed a SourceCode object without a config", function() {
+            var ast = espree.parse(TEST_CODE, DEFAULT_CONFIG);
+
+            var sourceCode = new SourceCode(TEST_CODE, ast),
+                messages = eslint.verify(sourceCode);
+
+            assert.equal(messages.length, 0);
+        });
+
+        it("should work when passed a SourceCode object containing ES6 syntax and config", function() {
             var sourceCode = new SourceCode("let foo = bar;", AST),
                 messages = eslint.verify(sourceCode, CONFIG);
 
             assert.equal(messages.length, 0);
         });
 
-        it("should report an error when blockBindings is false", function() {
+        it("should report an error when using let and blockBindings is false", function() {
             var sourceCode = new SourceCode("let foo = bar;", AST),
                 messages = eslint.verify(sourceCode, {
                     ecmaFeatures: { blockBindings: true },

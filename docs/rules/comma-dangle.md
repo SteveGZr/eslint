@@ -15,13 +15,15 @@ On the other hand, trailing commas simplify adding and removing items to objects
 
 This rule enforces consistent use of trailing commas in object and array literals.
 
-This rule takes one argument. If it is `"always"` then it warns whenever a missing comma is detected.
-If `"always-multiline"` then it warns if there is a missing trailing comma on arrays or objects that
-span multiple lines, and warns if there is a trailing comma present on single line arrays or objects.
-If `"never"` then it warns whenever an trailing comma is detected.
+This rule takes one argument, which can be one of the following options:
+
+- `"always"` - warn whenever a missing comma is detected.
+- `"always-multiline"` - warn if there is a missing trailing comma on arrays or objects that span multiple lines, and warns if there is a trailing comma present on single line arrays or objects.
+- `"never"` - warn whenever a trailing comma is detected.
+
 The default value of this option is `"never"`.
 
-The following patterns are considered warnings when configured `"never"`:
+The following patterns are considered problems when configured `"never"`:
 
 ```js
 /*eslint comma-dangle: [2, "never"]*/
@@ -39,7 +41,7 @@ foo({
 });
 ```
 
-The following patterns are not considered warnings when configured `"never"`:
+The following patterns are not considered problems when configured `"never"`:
 
 ```js
 /*eslint comma-dangle: [2, "never"]*/
@@ -57,7 +59,7 @@ foo({
 });
 ```
 
-The following patterns are considered warnings when configured `"always"`:
+The following patterns are considered problems when configured `"always"`:
 
 ```js
 /*eslint comma-dangle: [2, "always"]*/
@@ -75,7 +77,7 @@ foo({
 });
 ```
 
-The following patterns are not considered warnings when configured `"always"`:
+The following patterns are not considered problems when configured `"always"`:
 
 ```js
 /*eslint comma-dangle: [2, "always"]*/
@@ -93,7 +95,7 @@ foo({
 });
 ```
 
-The following patterns are considered warnings when configured `"always-multiline"`:
+The following patterns are considered problems when configured `"always-multiline"`:
 
 ```js
 /*eslint comma-dangle: [1, "always-multiline"]*/
@@ -121,7 +123,7 @@ foo({
 });
 ```
 
-The following patterns are not considered warnings when configured `"always-multiline"`:
+The following patterns are not considered problems when configured `"always-multiline"`:
 
 ```js
 /*eslint comma-dangle: [2, "always-multiline"]*/

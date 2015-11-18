@@ -1,8 +1,10 @@
-/* globals window */
 /**
  * @fileoverview Tests for eslint object.
  * @author Nicholas C. Zakas
+ * @copyright 2013 Nicholas C. Zakas. All rights reserved.
+ * See LICENSE file in root directory for full license.
  */
+/* globals window */
 
 "use strict";
 
@@ -10,7 +12,13 @@
 // Helper
 //------------------------------------------------------------------------------
 
-// To make sure this works in both browsers and Node.js
+/**
+ * To make sure this works in both browsers and Node.js
+ * @param {string} name Name of the module to require
+ * @param {object} windowName name of the window
+ * @returns {object} Required object
+ * @private
+ */
 function compatRequire(name, windowName) {
     if (typeof window === "object") {
         return window[windowName || name];
@@ -41,6 +49,13 @@ var TEST_CODE = "var answer = 6 * 7;",
 // Helpers
 //------------------------------------------------------------------------------
 
+/**
+ * Get variables in the current escope
+ * @param {object} scope current scope
+ * @param {string} name name of the variable to look for
+ * @returns {ASTNode} The variable object
+ * @private
+ */
 function getVariable(scope, name) {
     var variable = null;
     scope.variables.some(function(v) {
@@ -69,7 +84,6 @@ describe("eslint", function() {
         eslint.reset();
         sandbox.verifyAndRestore();
     });
-
 
     describe("when using events", function() {
         var code = TEST_CODE;
@@ -167,6 +181,10 @@ describe("eslint", function() {
         var code = TEST_CODE;
 
         it("should retrieve all text when used without parameters", function() {
+            /**
+             * Callback handler
+             * @returns {void}
+             */
             function handler() {
                 var source = eslint.getSource();
                 assert.equal(source, TEST_CODE);
@@ -183,6 +201,11 @@ describe("eslint", function() {
         });
 
         it("should retrieve all text for root node", function() {
+            /**
+             * Callback handler
+             * @param {ASTNode} node node to examine
+             * @returns {void}
+             */
             function handler(node) {
                 var source = eslint.getSource(node);
                 assert.equal(source, TEST_CODE);
@@ -199,6 +222,11 @@ describe("eslint", function() {
         });
 
         it("should clamp to valid range when retrieving characters before start of source", function() {
+            /**
+             * Callback handler
+             * @param {ASTNode} node node to examine
+             * @returns {void}
+             */
             function handler(node) {
                 var source = eslint.getSource(node, 2, 0);
                 assert.equal(source, TEST_CODE);
@@ -537,6 +565,30 @@ describe("eslint", function() {
 
             eslint.verify("try {} catch (err) {}", config, filename, true);
         });
+
+        it("should retrieve module scope correctly from an ES6 module", function() {
+            var config = { rules: {}, ecmaFeatures: { modules: true } };
+
+            eslint.reset();
+            eslint.on("AssignmentExpression", function() {
+                var scope = eslint.getScope();
+                assert.equal(scope.type, "module");
+            });
+
+            eslint.verify("var foo = {}; foo.bar = 1;", config, filename, true);
+        });
+
+        it("should retrieve function scope correctly when globalReturn is true", function() {
+            var config = { rules: {}, ecmaFeatures: { globalReturn: true } };
+
+            eslint.reset();
+            eslint.on("AssignmentExpression", function() {
+                var scope = eslint.getScope();
+                assert.equal(scope.type, "function");
+            });
+
+            eslint.verify("var foo = {}; foo.bar = 1;", config, filename, true);
+        });
     });
 
     describe("marking variables as used", function() {
@@ -626,76 +678,298 @@ describe("eslint", function() {
         });
     });
 
-    describe("when calling report", function() {
-        it("should correctly parse a message when being passed all options", function() {
+    describe("report()", function() {
+
+        var config;
+        beforeEach(function() {
             eslint.reset();
-            eslint.defineRule("test-rule", function(context) {
-                return {
-                    "Literal": function(node) {
-                        context.report(node, node.loc.end, "hello {{dynamic}}", {dynamic: node.type});
-                    }
-                };
+            config = { rules: {} };
+        });
+
+        it("should correctly parse a message when being passed all options", function() {
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, node.loc.end, "hello {{dynamic}}", {dynamic: node.type});
             });
 
-            var config = { rules: {} };
-            config.rules["test-rule"] = 1;
-
-            var messages = eslint.verify("0", config);
-            assert.equal(messages[0].message, "hello Literal");
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "hello Program",
+                nodeType: "Program",
+                line: 1,
+                column: 2,
+                source: "0"
+            });
         });
 
         it("should use the report the provided location when given", function() {
-            eslint.reset();
-            eslint.defineRule("test-rule", function(context) {
-                return {
-                    "Literal": function(node) {
-                        context.report(node, {line: 42, column: 13}, "hello world");
-                    }
-                };
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, {line: 42, column: 13}, "hello world");
             });
 
-            var config = { rules: {} };
-            config.rules["test-rule"] = 1;
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "hello world",
+                nodeType: "Program",
+                line: 42,
+                column: 14,
+                source: ""
+            });
+        });
 
-            var messages = eslint.verify("0", config);
-            assert.equal(messages[0].message, "hello world");
-            assert.equal(messages[0].line, 42);
-            assert.equal(messages[0].column, 14);
+        it("should not throw an error if node is provided and location is not", function() {
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, "hello world");
+            });
+
+            assert.doesNotThrow(function() {
+                eslint.verify("0", config, "", true);
+            });
+        });
+
+        it("should not throw an error if location is provided and node is not", function() {
+            eslint.on("Program", function() {
+                eslint.report("test-rule", 2, null, { line: 1, column: 1}, "hello world");
+            });
+
+            assert.doesNotThrow(function() {
+                eslint.verify("0", config, "", true);
+            });
+        });
+
+        it("should throw an error if neither node nor location is provided", function() {
+            eslint.on("Program", function() {
+                eslint.report("test-rule", 2, null, "hello world");
+            });
+
+            assert.throws(function() {
+                eslint.verify("0", config, "", true);
+            }, /Node must be provided when reporting error if location is not provided$/);
+        });
+
+        it("should throw an error if node is not an object", function() {
+            eslint.on("Program", function() {
+                eslint.report("test-rule", 2, "not a node", "hello world");
+            });
+
+            assert.throws(function() {
+                eslint.verify("0", config, "", true);
+            }, /Node must be an object$/);
         });
 
         it("should correctly parse a message with object keys as numbers", function() {
-            eslint.reset();
-            eslint.defineRule("test-rule", function(context) {
-                return {
-                    "Literal": function(node) {
-                        context.report(node, "my message {{name}}{{0}}", {0: "!", name: "testing"});
-                    }
-                };
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, "my message {{name}}{{0}}", {0: "!", name: "testing"});
             });
 
-            var config = { rules: {} };
-            config.rules["test-rule"] = 1;
-
-            var messages = eslint.verify("0", config);
-            assert.equal(messages[0].message, "my message testing!");
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "my message testing!",
+                nodeType: "Program",
+                line: 1,
+                column: 1,
+                source: "0"
+            });
         });
 
         it("should correctly parse a message with array", function() {
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, "my message {{1}}{{0}}", ["!", "testing"]);
+            });
+
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "my message testing!",
+                nodeType: "Program",
+                line: 1,
+                column: 1,
+                source: "0"
+            });
+        });
+
+        it("should include a fix passed as the last argument when location is not passed", function() {
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, "my message {{1}}{{0}}", ["!", "testing"], { range: [1, 1], text: "" });
+            });
+
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "my message testing!",
+                nodeType: "Program",
+                line: 1,
+                column: 1,
+                source: "0",
+                fix: { range: [1, 1], text: "" }
+            });
+        });
+
+        it("should allow template parameter with inner whitespace", function() {
             eslint.reset();
             eslint.defineRule("test-rule", function(context) {
                 return {
                     "Literal": function(node) {
-                        context.report(node, "my message {{1}}{{0}}", ["!", "testing"]);
+                        context.report(node, "message {{parameter name}}", {
+                            "parameter name": "yay!"
+                        });
                     }
                 };
             });
 
-            var config = { rules: {} };
             config.rules["test-rule"] = 1;
 
             var messages = eslint.verify("0", config);
-            assert.equal(messages[0].message, "my message testing!");
+            assert.equal(messages[0].message, "message yay!");
         });
+
+        it("should not crash if no template parameters are passed", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{code}}");
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message {{code}}");
+        });
+
+        it("should allow template parameter with non-identifier characters", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{parameter-name}}", {
+                            "parameter-name": "yay!"
+                        });
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message yay!");
+        });
+
+        it("should ignore template parameter with no specified value", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{parameter}}", {});
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message {{parameter}}");
+        });
+
+        it("should handle leading whitespace in template parameter", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{ parameter}}", {
+                            parameter: "yay!"
+                        });
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message yay!");
+        });
+
+        it("should handle trailing whitespace in template parameter", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{parameter }}", {
+                            parameter: "yay!"
+                        });
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message yay!");
+        });
+
+        it("should still allow inner whitespace as well as leading/trailing", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{ parameter name }}", {
+                            "parameter name": "yay!"
+                        });
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message yay!");
+        });
+
+        it("should still allow non-identifier characters as well as leading/trailing whitespace", function() {
+            eslint.reset();
+            eslint.defineRule("test-rule", function(context) {
+                return {
+                    "Literal": function(node) {
+                        context.report(node, "message {{ parameter-name }}", {
+                            "parameter-name": "yay!"
+                        });
+                    }
+                };
+            });
+
+            config.rules["test-rule"] = 1;
+
+            var messages = eslint.verify("0", config);
+            assert.equal(messages[0].message, "message yay!");
+        });
+
+        it("should include a fix passed as the last argument when location is passed", function() {
+            eslint.on("Program", function(node) {
+                eslint.report("test-rule", 2, node, { line: 42, column: 23 }, "my message {{1}}{{0}}", ["!", "testing"], { range: [1, 1], text: "" });
+            });
+
+            var messages = eslint.verify("0", config, "", true);
+            assert.deepEqual(messages[0], {
+                severity: 2,
+                ruleId: "test-rule",
+                message: "my message testing!",
+                nodeType: "Program",
+                line: 42,
+                column: 24,
+                source: "",
+                fix: { range: [1, 1], text: "" }
+            });
+        });
+
     });
 
     describe("when evaluating code", function() {
@@ -1851,12 +2125,12 @@ describe("eslint", function() {
     describe("when evaluating broken code", function() {
         var code = BROKEN_TEST_CODE;
 
-        it("should report a violation", function() {
+        it("should report a violation with a useful parse error prefix", function() {
             var messages = eslint.verify(code);
             assert.equal(messages.length, 1);
             assert.equal(messages[0].severity, 2);
             assert.isTrue(messages[0].fatal);
-
+            assert.match(messages[0].message, /^Parsing error:/);
         });
     });
 
@@ -2013,6 +2287,168 @@ describe("eslint", function() {
         });
     });
 
+    describe("when evaluating code with comments to change config when allowInlineConfig is enabled", function() {
+
+        it("should report a violation for disabling rules", function() {
+            var code = [
+                "alert('test'); // eslint-disable-line no-alert"
+            ].join("\n");
+            var config = {
+                rules: {
+                    "no-alert": 1
+                }
+            };
+
+            var messages = eslint.verify(code, config, {
+                filename: filename,
+                allowInlineConfig: false
+            });
+
+            assert.equal(messages.length, 1);
+            assert.equal(messages[0].ruleId, "no-alert");
+        });
+
+        it("should report a violation for global variable declarations",
+        function() {
+            var code = [
+                "/* global foo */"
+            ].join("\n");
+            var config = {
+                rules: {
+                    test: 2
+                }
+            };
+            var ok = false;
+
+            eslint.defineRules({test: function(context) {
+                return {
+                    "Program": function() {
+                        var scope = context.getScope();
+                        var comments = context.getAllComments();
+                        assert.equal(1, comments.length);
+
+                        var foo = getVariable(scope, "foo");
+                        assert.notOk(foo);
+
+                        ok = true;
+                    }
+                };
+            }});
+
+            eslint.verify(code, config, {allowInlineConfig: false});
+            assert(ok);
+        });
+
+        it("should report a violation for eslint-disable", function() {
+            var code = [
+                "/* eslint-disable */",
+                "alert('test');"
+            ].join("\n");
+            var config = {
+                rules: {
+                    "no-alert": 1
+                }
+            };
+
+            var messages = eslint.verify(code, config, {
+                filename: filename,
+                allowInlineConfig: false
+            });
+
+            assert.equal(messages.length, 1);
+            assert.equal(messages[0].ruleId, "no-alert");
+        });
+
+        it("should not report a violation for rule changes", function() {
+            var code = [
+                "/*eslint no-alert:2*/",
+                "alert('test');"
+            ].join("\n");
+            var config = {
+                rules: {
+                    "no-alert": 0
+                }
+            };
+
+            var messages = eslint.verify(code, config, {
+                filename: filename,
+                allowInlineConfig: false
+            });
+
+            assert.equal(messages.length, 0);
+        });
+
+        it("should report a violation for disable-line", function() {
+            var code = [
+                "alert('test'); // eslint-disable-line"
+            ].join("\n");
+            var config = {
+                rules: {
+                    "no-alert": 2
+                }
+            };
+
+            var messages = eslint.verify(code, config, {
+                filename: filename,
+                allowInlineConfig: false
+            });
+
+            assert.equal(messages.length, 1);
+            assert.equal(messages[0].ruleId, "no-alert");
+        });
+
+        it("should report a violation for env changes", function() {
+            var code = [
+                "/*eslint-env browser*/"
+            ].join("\n");
+            var config = {
+                rules: {
+                    test: 2
+                }
+            };
+            var ok = false;
+
+            eslint.defineRules({test: function(context) {
+                return {
+                    "Program": function() {
+                        var scope = context.getScope();
+                        var comments = context.getAllComments();
+                        assert.equal(1, comments.length);
+
+                        var windowVar = getVariable(scope, "window");
+                        assert.notOk(windowVar.eslintExplicitGlobal);
+
+                        ok = true;
+                    }
+                };
+            }});
+
+            eslint.verify(code, config, {allowInlineConfig: false});
+            assert(ok);
+        });
+    });
+
+    describe("when evaluating code with comments to change config when allowInlineConfig is disabled", function() {
+
+        it("should not report a violation", function() {
+            var code = [
+                "alert('test'); // eslint-disable-line no-alert"
+            ].join("\n");
+            var config = {
+                rules: {
+                    "no-alert": 1
+                }
+            };
+
+            var messages = eslint.verify(code, config, {
+                filename: filename,
+                allowInlineConfig: true
+            });
+
+            assert.equal(messages.length, 0);
+        });
+    });
+
     describe("when evaluating code with code comments", function() {
 
         it("should emit enter only once for each comment", function() {
@@ -2063,6 +2499,48 @@ describe("eslint", function() {
     });
 
     describe("verify()", function() {
+
+        describe("filenames", function() {
+            it("should allow filename to be passed on options object", function() {
+
+                eslint.verify("foo;", {}, { filename: "foo.js"});
+                var result = eslint.getFilename();
+                assert.equal(result, "foo.js");
+            });
+
+            it("should allow filename to be passed as third argument", function() {
+
+                eslint.verify("foo;", {}, "foo.js");
+                var result = eslint.getFilename();
+                assert.equal(result, "foo.js");
+            });
+
+            it("should default filename to <input> when options object doesn't have filename", function() {
+
+                eslint.verify("foo;", {}, {});
+                var result = eslint.getFilename();
+                assert.equal(result, "<input>");
+            });
+
+            it("should default filename to <input> when only two arguments are passed", function() {
+
+                eslint.verify("foo;", {});
+                var result = eslint.getFilename();
+                assert.equal(result, "<input>");
+            });
+        });
+
+        describe("saveState", function() {
+            it("should save the state when saveState is passed as an option", function() {
+
+                var spy = sinon.spy(eslint, "reset");
+                eslint.verify("foo;", {}, { saveState: true });
+                assert.equal(spy.callCount, 0);
+            });
+
+
+        });
+
 
         it("should report warnings in order by line and column when called", function() {
 
@@ -2135,7 +2613,7 @@ describe("eslint", function() {
             }, filename);
 
             assert.equal(messages.length, 1);
-            assert.equal(messages[0].message, "Illegal return statement");
+            assert.equal(messages[0].message, "Parsing error: Illegal return statement");
         });
 
         it("should not parse global return when Node.js environment is false", function() {
@@ -2143,7 +2621,7 @@ describe("eslint", function() {
             var messages = eslint.verify("return;", {}, filename);
 
             assert.equal(messages.length, 1);
-            assert.equal(messages[0].message, "Illegal return statement");
+            assert.equal(messages[0].message, "Parsing error: Illegal return statement");
         });
 
         it("should properly parse JSX when passed ecmaFeatures", function() {
@@ -2164,7 +2642,7 @@ describe("eslint", function() {
             assert.equal(messages.length, 1);
             assert.equal(messages[0].line, 1);
             assert.equal(messages[0].column, 21);
-            assert.equal(messages[0].message, "Unexpected token <");
+            assert.equal(messages[0].message, "Parsing error: Unexpected token <");
         });
 
         it("should not report an error when JSX code is encountered and JSX is enabled", function() {
@@ -2224,6 +2702,38 @@ describe("eslint", function() {
         it("should be able to return in global if there is a comment which has \"eslint-env node\"", function() {
             var messages = eslint.verify("/* eslint-env node */ return;", null, "eslint-env node");
             assert.equal(messages.length, 0);
+        });
+
+        it("should attach a \"/*global\" comment node to declared variables", function() {
+            var code = "/* global foo */\n/* global bar, baz */";
+            var ok = false;
+
+            eslint.defineRules({test: function(context) {
+                return {
+                    "Program": function() {
+                        var scope = context.getScope();
+                        var comments = context.getAllComments();
+                        assert.equal(2, comments.length);
+
+                        var foo = getVariable(scope, "foo");
+                        assert.equal(true, foo.eslintExplicitGlobal);
+                        assert.equal(comments[0], foo.eslintExplicitGlobalComment);
+
+                        var bar = getVariable(scope, "bar");
+                        assert.equal(true, bar.eslintExplicitGlobal);
+                        assert.equal(comments[1], bar.eslintExplicitGlobalComment);
+
+                        var baz = getVariable(scope, "baz");
+                        assert.equal(true, baz.eslintExplicitGlobal);
+                        assert.equal(comments[1], baz.eslintExplicitGlobalComment);
+
+                        ok = true;
+                    }
+                };
+            }});
+
+            eslint.verify(code, {rules: {test: 2}});
+            assert(ok);
         });
     });
 
@@ -2504,7 +3014,8 @@ describe("eslint", function() {
 
         describe("Custom parser", function() {
 
-            var parserFixtures = path.join(__dirname, "../fixtures/parsers");
+            var parserFixtures = path.join(__dirname, "../fixtures/parsers"),
+                errorPrefix = "Parsing error: ";
 
             it("should not report an error when JSX code contains a spread operator and JSX is enabled", function() {
                 var code = "var myDivElement = <div {...this.props} />;";
@@ -2525,7 +3036,7 @@ describe("eslint", function() {
                 var messages = eslint.verify(";", { parser: parser }, "filename");
                 assert.equal(messages.length, 1);
                 assert.equal(messages[0].severity, 2);
-                assert.equal(messages[0].message, require(parser).expectedError);
+                assert.equal(messages[0].message, errorPrefix + require(parser).expectedError);
             });
 
             it("should not modify a parser error message without a leading line: prefix", function() {
@@ -2533,7 +3044,7 @@ describe("eslint", function() {
                 var messages = eslint.verify(";", { parser: parser }, "filename");
                 assert.equal(messages.length, 1);
                 assert.equal(messages[0].severity, 2);
-                assert.equal(messages[0].message, require(parser).expectedError);
+                assert.equal(messages[0].message, errorPrefix + require(parser).expectedError);
             });
 
         });

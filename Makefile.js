@@ -20,7 +20,8 @@ var checker = require("npm-license"),
     os = require("os"),
     path = require("path"),
     semver = require("semver"),
-    ejs = require("ejs");
+    ejs = require("ejs"),
+    loadPerf = require("load-perf");
 
 //------------------------------------------------------------------------------
 // Settings
@@ -68,7 +69,7 @@ var NODE = "node ", // intentional extra space
     ISSUE_REGEX = /\((?:fixes|refs) #\d+(?:.*(?:fixes|refs) #\d+)*\)$/,
 
     // Settings
-    MOCHA_TIMEOUT = process.platform === "win32" ? 3000 : 2000;
+    MOCHA_TIMEOUT = 4000;
 
 //------------------------------------------------------------------------------
 // Helpers
@@ -140,6 +141,20 @@ function generateBlogPost(releaseInfo) {
             "-released.md";
 
     output.to(filename);
+}
+
+/**
+ * Generates a doc page with formatter result examples
+ * @param  {Object} formatterInfo Linting results from each formatter
+ * @returns {void}
+ */
+function generateFormatterExamples(formatterInfo) {
+    var output = ejs.render(cat("./templates/formatter-examples.md.ejs"), formatterInfo),
+        filename = "../eslint.github.io/docs/user-guide/formatters/index.md",
+        htmlFilename = "../eslint.github.io/docs/user-guide/formatters/html-formatter-example.html";
+
+    output.to(filename);
+    formatterInfo.formatterResults.html.result.to(htmlFilename);
 }
 
 /**
@@ -296,6 +311,12 @@ function getFirstVersionOfDeletion(filePath) {
         .sort(semver.compare)[0];
 }
 
+
+/**
+ * Returns the version tags
+ * @returns {string[]} Tags
+ * @private
+ */
 function getVersionTags() {
     var tags = splitCommandResultToLines(execSilent("git tag"));
 
@@ -307,6 +328,11 @@ function getVersionTags() {
     }, []).sort(semver.compare);
 }
 
+/**
+ * Returns all the branch names
+ * @returns {string[]} branch names
+ * @private
+ */
 function getBranches() {
     var branchesRaw = splitCommandResultToLines(execSilent("git branch --list")),
         branches = [],
@@ -344,7 +370,8 @@ function lintMarkdown(files) {
             MD029: false, // Ordered list item prefix
             MD030: false, // Spaces after list markers
             MD034: false, // Bare URL used
-            MD040: false  // Fenced code blocks should have a language specified
+            MD040: false, // Fenced code blocks should have a language specified
+            MD041: false  // First line in file should be a top level header
         },
         result = markdownlint.sync({
             files: files,
@@ -358,10 +385,58 @@ function lintMarkdown(files) {
     return { code: returnCode };
 }
 
-
+/**
+ * Check if the branch name is valid
+ * @param {string} branchName Branch name to check
+ * @returns {boolean} true is branch exists
+ * @private
+ */
 function hasBranch(branchName) {
     var branches = getBranches();
     return branches.indexOf(branchName) !== -1;
+}
+
+/**
+ * Gets linting results from every formatter, based on a hard-coded snippet and config
+ * @returns {Object} Output from each formatter
+ */
+function getFormatterResults() {
+    var CLIEngine = require("./lib/cli-engine"),
+        chalk = require("chalk");
+
+    var formatterFiles = fs.readdirSync("./lib/formatters/"),
+        cli = new CLIEngine({
+            useEslintrc: false,
+            baseConfig: { "extends": "eslint:recommended" },
+            rules: {
+                "no-else-return": 1,
+                "indent": [1, 4],
+                "space-unary-ops": 2,
+                "semi": [1, "always"],
+                "consistent-return": 2
+            }
+        }),
+        codeString = [
+            "function addOne(i) {",
+            "    if (i != NaN) {",
+            "        return i ++",
+            "    } else {",
+            "      return",
+            "    }",
+            "};"
+        ].join("\n"),
+        rawMessages = cli.executeOnText(codeString, "fullOfProblems.js");
+
+    return formatterFiles.reduce(function(data, filename) {
+        var fileExt = path.extname(filename),
+            name = path.basename(filename, fileExt);
+        if (fileExt === ".js") {
+            data.formatterResults[name] = {
+                result: chalk.stripColor(cli.getFormatter(name)(rawMessages.results))
+            };
+        }
+        return data;
+    }, { formatterResults: {} });
 }
 
 //------------------------------------------------------------------------------
@@ -374,10 +449,20 @@ target.all = function() {
 
 target.lint = function() {
     var errors = 0,
+        makeFileCache = " ",
+        jsCache = " ",
+        testCache = " ",
         lastReturn;
 
+    // using the cache locally to speed up linting process
+    if (!process.env.TRAVIS) {
+        makeFileCache = " --cache --cache-file .cache/makefile_cache ";
+        jsCache = " --cache --cache-file .cache/js_cache ";
+        testCache = " --cache --cache-file .cache/test_cache ";
+    }
+
     echo("Validating Makefile.js");
-    lastReturn = exec(ESLINT + MAKEFILE);
+    lastReturn = exec(ESLINT + makeFileCache + MAKEFILE);
     if (lastReturn.code !== 0) {
         errors++;
     }
@@ -395,13 +480,13 @@ target.lint = function() {
     }
 
     echo("Validating JavaScript files");
-    lastReturn = exec(ESLINT + JS_FILES);
+    lastReturn = exec(ESLINT + jsCache + JS_FILES);
     if (lastReturn.code !== 0) {
         errors++;
     }
 
     echo("Validating JavaScript test files");
-    lastReturn = exec(ESLINT + TEST_FILES);
+    lastReturn = exec(ESLINT + testCache + TEST_FILES);
     if (lastReturn.code !== 0) {
         errors++;
     }
@@ -494,7 +579,8 @@ target.gensite = function() {
 
     // 4. Loop through all files in temporary directory
     find(TEMP_DIR).forEach(function(filename) {
-        if (test("-f", filename)) {
+        if (test("-f", filename) && path.extname(filename) !== "") {
+
             var rulesUrl = "https://github.com/eslint/eslint/tree/master/lib/rules/";
             var docsUrl = "https://github.com/eslint/eslint/tree/master/docs/rules/";
 
@@ -562,6 +648,9 @@ target.gensite = function() {
     target.browserify();
     cp("-f", "build/eslint.js", SITE_DIR + "js/app/eslint.js");
     cp("-f", "conf/eslint.json", SITE_DIR + "js/app/eslint.json");
+
+    // 13. Create Example Formatter Output Page
+    generateFormatterExamples(getFormatterResults());
 };
 
 target.publishsite = function() {
@@ -671,28 +760,58 @@ target.checkRuleFiles = function() {
         var indexLine = new RegExp("\\* \\[" + basename + "\\].*").exec(rulesIndexText);
         indexLine = indexLine ? indexLine[0] : "";
 
-
+        /**
+         * Check if basename is present in eslint conf
+         * @returns {boolean} true if present
+         * @private
+         */
         function isInConfig() {
             return eslintConf.hasOwnProperty(basename);
         }
 
+        /**
+         * Check if rule is off in eslint conf
+         * @returns {boolean} true if off
+         * @private
+         */
         function isOffInConfig() {
             var rule = eslintConf[basename];
             return rule === 0 || (rule && rule[0] === 0);
         }
 
+        /**
+         * Check if rule is on in eslint conf
+         * @returns {boolean} true if on
+         * @private
+         */
         function isOnInConfig() {
             return !isOffInConfig();
         }
 
+        /**
+         * Check if rule is not recommended by eslint
+         * @returns {boolean} true if not recommended
+         * @private
+         */
         function isNotRecommended() {
             return indexLine.indexOf("(recommended)") === -1;
         }
 
+        /**
+         * Check if rule is recommended by eslint
+         * @returns {boolean} true if recommended
+         * @private
+         */
         function isRecommended() {
             return !isNotRecommended();
         }
 
+        /**
+         * Check if id is present in title
+         * @param {string} id id to check for
+         * @returns {boolean} true if present
+         * @private
+         */
         function hasIdInTitle(id) {
             var docText = cat(docFilename);
             var idInTitleRegExp = new RegExp("^# (.*?) \\(" + id + "\\)");
@@ -752,6 +871,12 @@ target.checkRuleFiles = function() {
 
 target.checkLicenses = function() {
 
+    /**
+     * Check if a dependency is eligible to be used by us
+     * @param {object} dependency dependency to check
+     * @returns {boolean} true if we have permission
+     * @private
+     */
     function isPermissible(dependency) {
         var licenses = dependency.licenses;
 
@@ -820,16 +945,33 @@ target.checkGitCommit = function() {
 
     // Only check non-release messages
     if (!semver.valid(commitMsgs[0])) {
+        if (commitMsgs[0].slice(0, commitMsgs[0].indexOf("\n")).length > 72) {
+            echo(" - First line of commit message must not exceed 72 characters");
+            failed = true;
+        }
+
         // Check for tag at start of message
         if (!TAG_REGEX.test(commitMsgs[0])) {
-            echo(" - Commit message must start with one of:\n    'Fix:'\n    'Update:'\n    'Breaking:'\n    'Docs:'\n    'Build:'\n    'New:'\n    'Upgrade:'");
+            echo([" - Commit summary must start with one of:",
+                "    'Fix:'",
+                "    'Update:'",
+                "    'Breaking:'",
+                "    'Docs:'",
+                "    'Build:'",
+                "    'New:'",
+                "    'Upgrade:'",
+                "   Please refer to the contribution guidelines for more details."].join("\n"));
             failed = true;
         }
 
         // Check for an issue reference at end (unless it's a documentation commit)
         if (!/^Docs:/.test(commitMsgs[0])) {
             if (!ISSUE_REGEX.test(commitMsgs[0])) {
-                echo(" - Commit message must end with with one of:\n    '(fixes #1234)'\n    '(refs #1234)'\n   Where '1234' is the issue being addressed.");
+                echo([" - Commit summary must end with with one of:",
+                    "    '(fixes #1234)'",
+                    "    '(refs #1234)'",
+                    "   Where '1234' is the issue being addressed.",
+                    "   Please refer to the contribution guidelines for more details."].join("\n"));
                 failed = true;
             }
         }
@@ -840,6 +982,16 @@ target.checkGitCommit = function() {
     }
 };
 
+/**
+ * Calculates the time for each run for performance
+ * @param {string} cmd cmd
+ * @param {int} runs Total number of runs to do
+ * @param {int} runNumber Current run number
+ * @param {int[]} results Collection results from each run
+ * @param {function} cb Function to call when everything is done
+ * @returns {int[]} calls the cb with all the results
+ * @private
+ */
 function time(cmd, runs, runNumber, results, cb) {
     var start = process.hrtime();
     exec(cmd, { silent: true }, function() {
@@ -857,10 +1009,32 @@ function time(cmd, runs, runNumber, results, cb) {
 
 }
 
+/**
+ * Run the load performance for eslint
+ * @returns {void}
+ * @private
+ */
+function loadPerformance() {
+    var results = [];
+    for (var cnt = 0; cnt < 5; cnt++) {
+        var loadPerfData = loadPerf({
+            checkDependencies: false
+        });
+
+        echo("Load performance Run #" + (cnt + 1) + ":  %dms", loadPerfData.loadTime);
+        results.push(loadPerfData.loadTime);
+    }
+    results.sort(function(a, b) {
+        return a - b;
+    });
+    var median = results[~~(results.length / 2)];
+    echo("\nLoad Performance median :  %dms", median);
+}
+
 target.perf = function() {
     var cpuSpeed = os.cpus()[0].speed,
         max = PERF_MULTIPLIER / cpuSpeed,
-        cmd = ESLINT + "./tests/performance/jshint.js";
+        cmd = ESLINT + "--no-ignore ./tests/performance/jshint.js";
 
     echo("CPU Speed is %d with multiplier %d", cpuSpeed, PERF_MULTIPLIER);
 
@@ -873,10 +1047,11 @@ target.perf = function() {
 
         if (median > max) {
             echo("Performance budget exceeded: %dms (limit: %dms)", median, max);
-            exit(1);
         } else {
             echo("Performance budget ok:  %dms (limit: %dms)", median, max);
         }
+        echo("\n");
+        loadPerformance();
     });
 
 };

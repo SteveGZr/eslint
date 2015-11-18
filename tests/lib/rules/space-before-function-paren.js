@@ -107,7 +107,20 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 13
                 }
-            ]
+            ],
+            output: "function foo () {}"
+        },
+        {
+            code: "function foo/* */() {}",
+            errors: [
+                {
+                    type: "FunctionDeclaration",
+                    message: "Missing space before function parentheses.",
+                    line: 1,
+                    column: 13
+                }
+            ],
+            output: "function foo /* */() {}"
         },
         {
             code: "var foo = function() {}",
@@ -118,7 +131,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 19
                 }
-            ]
+            ],
+            output: "var foo = function () {}"
         },
         {
             code: "var bar = function foo() {}",
@@ -129,7 +143,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 23
                 }
-            ]
+            ],
+            output: "var bar = function foo () {}"
         },
         {
             code: "var obj = { get foo() {}, set foo(val) {} };",
@@ -146,7 +161,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 34
                 }
-            ]
+            ],
+            output: "var obj = { get foo () {}, set foo (val) {} };"
         },
         {
             code: "var obj = { foo() {} };",
@@ -158,7 +174,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 16
                 }
-            ]
+            ],
+            output: "var obj = { foo () {} };"
         },
         {
             code: "function* foo() {}",
@@ -170,7 +187,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 14
                 }
-            ]
+            ],
+            output: "function* foo () {}"
         },
 
         {
@@ -183,7 +201,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 13
                 }
-            ]
+            ],
+            output: "function foo() {}"
         },
         {
             code: "var foo = function () {}",
@@ -195,7 +214,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 19
                 }
-            ]
+            ],
+            output: "var foo = function() {}"
         },
         {
             code: "var bar = function foo () {}",
@@ -207,7 +227,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 23
                 }
-            ]
+            ],
+            output: "var bar = function foo() {}"
         },
         {
             code: "var obj = { get foo () {}, set foo (val) {} };",
@@ -225,7 +246,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 35
                 }
-            ]
+            ],
+            output: "var obj = { get foo() {}, set foo(val) {} };"
         },
         {
             code: "var obj = { foo () {} };",
@@ -238,7 +260,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 16
                 }
-            ]
+            ],
+            output: "var obj = { foo() {} };"
         },
         {
             code: "function* foo () {}",
@@ -251,7 +274,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 14
                 }
-            ]
+            ],
+            output: "function* foo() {}"
         },
 
         {
@@ -293,7 +317,12 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 3,
                     column: 49
                 }
-            ]
+            ],
+            output: [
+                "function foo() {}",
+                "var bar = function () {}",
+                "var obj = { get foo() {}, set foo(val) {}, bar() {} };"
+            ].join("\n")
         },
         {
             code: "class Foo { constructor () {} *method () {} }",
@@ -312,7 +341,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 38
                 }
-            ]
+            ],
+            output: "class Foo { constructor() {} *method() {} }"
         },
         {
             code: "var foo = { bar () {} }",
@@ -325,7 +355,8 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 1,
                     column: 16
                 }
-            ]
+            ],
+            output: "var foo = { bar() {} }"
         },
         {
             code: [
@@ -366,7 +397,12 @@ ruleTester.run("space-before-function-paren", rule, {
                     line: 3,
                     column: 47
                 }
-            ]
+            ],
+            output: [
+                "function foo () {}",
+                "var bar = function() {}",
+                "var obj = { get foo () {}, set foo (val) {}, bar () {} };"
+            ].join("\n")
         }
     ]
 });

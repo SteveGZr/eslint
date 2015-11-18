@@ -20,13 +20,13 @@ This rule is aimed at increasing code clarity by discouraging deeply nesting cal
 
 ### Options
 
-There is no default max depth for this rule.  You must configure the depth as an option by using the second argument in your configuration. For example, this sets the rule as an error (code is 2) with a maximum depth of 3:
+The default max depth for this rule is 10. You can define the depth as an option by using the second argument in your configuration. For example, this sets the rule as an error (code is 2) with a maximum depth of 3:
 
 ```json
 "max-nested-callbacks": [2, 3]
 ```
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint max-nested-callbacks: [2, 3]*/
@@ -42,7 +42,7 @@ foo(function () {
 });
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint max-nested-callbacks: [2, 3]*/

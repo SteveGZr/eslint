@@ -46,14 +46,14 @@ Due to these different behaviors, it is common to have guidelines as to which st
 
 This error is aimed at enforcing a particular type of function style throughout a JavaScript file, either declarations or expressions. You can specify which you prefer in the configuration.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint func-style: [2, "declaration"]*/
 
 var foo = function() {  /*error Expected a function declaration.*/
     // ...
-} ;
+};
 ```
 
 ```js
@@ -64,24 +64,41 @@ function foo() {  /*error Expected a function expression.*/
 }
 ```
 
-The following patterns are not considered warnings:
+```js
+/*eslint func-style: [2, "declaration"]*/
+
+var foo = () => {};  /*error Expected a function declaration.*/
+```
+
+The following patterns are not considered problems:
 
 ```js
 /*eslint func-style: [2, "declaration"]*/
 
+function foo() {
+    // ...
+}
+
+// Methods (functions assigned to objects) are not checked by this rule
 SomeObject.foo = function() {
     // ...
 };
 ```
-
 
 ```js
 /*eslint func-style: [2, "expression"]*/
 
-SomeObject.foo = function() {
+var foo = function() {
     // ...
 };
 ```
+
+```js
+/*eslint func-style: [2, "declaration", { "allowArrowFunctions": true }]*/
+
+var foo = () => {};
+```
+
 
 ### Options
 
@@ -96,6 +113,12 @@ This reports an error if any function expressions are used where function declar
 ```
 
 This configuration reports an error when function declarations are used instead of function expressions.
+
+```json
+"func-style": [2, "expression", { "allowArrowFunctions": true }]
+```
+
+This configuration works as expression setting works but does not check for arrow functions.
 
 ## When Not To Use It
 

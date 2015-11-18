@@ -15,7 +15,9 @@ If one of those occurs in an innocent-looking statement such as `a == b` the act
 
 This rule is aimed at eliminating the type-unsafe equality operators.
 
-The following patterns are considered warnings:
+**Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.
+
+The following patterns are considered problems:
 
 ```js
 /* eslint eqeqeq: 2 */
@@ -43,7 +45,7 @@ You can specify this option using the following configuration:
 "eqeqeq": [2, "smart"]
 ```
 
-The following patterns are considered okay and do not cause warnings:
+The following patterns are not considered problems:
 
 ```js
 /* eslint eqeqeq: [2, "smart"] */
@@ -55,7 +57,7 @@ true == true
 foo == null
 ```
 
-The following patterns are considered warnings with "smart":
+The following patterns are considered problems with "smart":
 
 ```js
 /* eslint eqeqeq: [2, "smart"] */
@@ -81,7 +83,7 @@ You can specify this option using the following configuration:
 "eqeqeq": [2, "allow-null"]
 ```
 
-The following pattern is considered okay and do not cause warnings:
+The following patterns are not considered problems:
 
 ```js
 /* eslint eqeqeq: [2, "allow-null"] */
@@ -89,7 +91,7 @@ The following pattern is considered okay and do not cause warnings:
 foo == null
 ```
 
-The following patterns are considered warnings with "allow-null":
+The following patterns are considered problems with "allow-null":
 
 ```js
 /* eslint eqeqeq: [2, "allow-null"] */

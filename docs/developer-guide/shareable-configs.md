@@ -108,7 +108,7 @@ myconfig
 In your `index.js` you can do something like this:
 
 ```js
-module.exports = require('./lib/ci.js);
+module.exports = require('./lib/ci.js');
 ```
 
 Now inside your package you have `/lib/defaults.js`, which contains:
@@ -155,4 +155,4 @@ In the last file, you'll once again see that to properly resolve your config, yo
 
 ## Further Reading
 
-* [npm Developer Guide](https://www.npmjs.org/doc/misc/npm-developers.html)
+* [npm Developer Guide](https://docs.npmjs.com/misc/developers)

@@ -22,7 +22,7 @@ The problem is when these developers work together in a project. This rule enfor
 This rule enforces a coding style where empty newlines are required or disallowed after `var`, `let`, or `const` statements to achieve a consistent coding style across the project.
 Invalid option value (anything other than `always` nor `never`), defaults to `always`.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint newline-after-var: [2, "always"]*/
@@ -34,6 +34,7 @@ console.log(greet, name);
 
 ```js
 /*eslint newline-after-var: [2, "never"]*/
+/*eslint-env es6*/
 
 let greet = "hello,",     /*error Unexpected blank line after variable declarations.*/
     name = "world";
@@ -43,13 +44,14 @@ console.log(greet, name);
 
 ```js
 /*eslint newline-after-var: 2*/  // defaults to always
+/*eslint-env es6*/
 
 var greet = "hello,";
 const NAME = "world";      /*error Expected blank line after variable declarations.*/
 console.log(greet, NAME);
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint newline-after-var: [2, "always"]*/
@@ -62,6 +64,7 @@ console.log(greet, name);
 
 ```js
 /*eslint newline-after-var: [2, "never"]*/
+/*eslint-env es6*/
 
 let greet = "hello,",
     name = "world";
@@ -70,6 +73,7 @@ console.log(greet, name);
 
 ```js
 /*eslint newline-after-var: 2*/  // defaults to always
+/*eslint-env es6*/
 
 var greet = "hello,";
 const NAME = "world";
@@ -80,7 +84,7 @@ console.log(greet, NAME);
 Note: in `"always"` mode, comments on a line directly after var statements are treated like additional var statements.
 That is, they do not require a blank line between themselves and the var statements above, but do require a blank line after them.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint newline-after-var: [2, "always"]*/
@@ -98,7 +102,7 @@ var target_name = "world";      /*error Expected blank line after variable decla
 console.log(greet, name);
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint newline-after-var: [2, "always"]*/

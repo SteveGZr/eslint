@@ -7,6 +7,8 @@ var str = "Hello, " + name + "!";
 ```
 
 ```js
+/*eslint-env es6*/
+
 var str = `Hello, ${name}!`;
 ```
 
@@ -14,20 +16,27 @@ var str = `Hello, ${name}!`;
 
 This rule is aimed to flag usage of `+` operators with strings.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
-var str = "Hello, " + name + "!";
+/*eslint prefer-template: 2*/
+
+var str = "Hello, " + name + "!";           /*error Unexpected string concatenation.*/
+var str = "Time: " + (12 * 60 * 60 * 1000); /*error Unexpected string concatenation.*/
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
+/*eslint prefer-template: 2*/
+/*eslint-env es6*/
+
 var str = "Hello World!";
-```
-
-```js
 var str = `Hello, ${name}!`;
+var str = `Time: ${12 * 60 * 60}`;
+
+// This is reported by `no-useless-concat`.
+var str = "Hello, " + "World!";
 ```
 
 ## When Not to Use It

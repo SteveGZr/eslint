@@ -1,5 +1,7 @@
 # Enforces spacing around commas (comma-spacing)
 
+**Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.
+
 Spacing around commas improve readability of a list of items. Although most of the style guidelines for languages prescribe adding a space after a comma and not before it, it is subjective to the preferences of a project.
 
 ```js
@@ -26,7 +28,7 @@ The following examples show two primary usages of this option.
 
 This is the default option. It enforces spacing after commas and disallows spacing before commas.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint comma-spacing: [2, {"before": false, "after": true}]*/
@@ -40,7 +42,7 @@ function foo(a ,b){}                    /*error There should be no space before 
 a ,b                                    /*error There should be no space before ','.*/ /*error A space is required after ','.*/
 ```
 
-The following patterns are not warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint comma-spacing: [2, {"before": false, "after": true}]*/
@@ -59,7 +61,7 @@ a, b
 
 This option enforces spacing before commas and disallows spacing after commas.
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint comma-spacing: [2, {"before": true, "after": false}]*/
@@ -72,7 +74,7 @@ function foo(a,b){}                     /*error A space is required before ','.*
 a, b                                    /*error A space is required before ','.*/ /*error There should be no space after ','.*/
 ```
 
-The following patterns are not warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint comma-spacing: [2, {"before": true, "after": false}]*/
@@ -108,7 +110,7 @@ If your project will not be following a consistent comma-spacing pattern, turn t
 ## Further Reading
 
 * [Javascript](http://javascript.crockford.com/code.html)
-* [Dojo Style Guide](http://dojotoolkit.org/community/styleGuide)
+* [Dojo Style Guide](https://dojotoolkit.org/reference-guide/1.9/developer/styleguide.html)
 
 
 ## Related Rules

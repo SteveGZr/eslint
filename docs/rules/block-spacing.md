@@ -2,6 +2,8 @@
 
 This rule is for spacing style within single line blocks.
 
+**Fixable:** This rule is automatically fixable using the `--fix` flag on the command line.
+
 ## Rule Details
 
 This rule is aimed to flag usage of spacing inside of blocks.
@@ -18,7 +20,7 @@ This rule has a option, its value is `"always"` or `"never"`.
 }
 ```
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint block-spacing: 2*/
@@ -26,7 +28,7 @@ function foo() {return true;} /*error Requires a space after "{".*/ /*error Requ
 if (foo) { bar = 0;}          /*error Requires a space before "}".*/
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint block-spacing: 2*/
@@ -43,7 +45,7 @@ if (foo) { bar = 0; }
 }
 ```
 
-The following patterns are considered warnings:
+The following patterns are considered problems:
 
 ```js
 /*eslint block-spacing: [2, "never"]*/
@@ -52,7 +54,7 @@ function foo() { return true; } /*error Unexpected space(s) after "{".*/ /*error
 if (foo) { bar = 0;}            /*error Unexpected space(s) after "{".*/
 ```
 
-The following patterns are not considered warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint block-spacing: [2, "never"]*/

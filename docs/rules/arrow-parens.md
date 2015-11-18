@@ -8,6 +8,8 @@ be wrapped in parentheses. This rule enforces the consistent use of parentheses 
 This rule enforces parentheses around arrow function parameters regardless of arity. For example:
 
 ```js
+/*eslint-env es6*/
+
 // Bad
 a => {}
 
@@ -20,6 +22,8 @@ when a comparison such as `>=` was the intent.
 
 
 ```js
+/*eslint-env es6*/
+
 // Bad
 if (a => 2) {
 }
@@ -32,6 +36,8 @@ if (a >= 2) {
 The rule can also be configured to discourage the use of parens when they are not required:
 
 ```js
+/*eslint-env es6*/
+
 // Bad
 (a) => {}
 
@@ -49,10 +55,11 @@ You can set the option in configuration like this:
 
 #### "always"
 
-When the rule is set to `"always"` the following patterns are considered warnings:
+When the rule is set to `"always"` the following patterns are considered problems:
 
 ```js
 /*eslint arrow-parens: [2, "always"]*/
+/*eslint-env es6*/
 
 a => {};                     /*error Expected parentheses around arrow function argument.*/
 a => a;                      /*error Expected parentheses around arrow function argument.*/
@@ -62,10 +69,11 @@ a.then(foo => a);            /*error Expected parentheses around arrow function 
 a(foo => { if (true) {}; }); /*error Expected parentheses around arrow function argument.*/
 ```
 
-The following patterns are not warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint arrow-parens: [2, "always"]*/
+/*eslint-env es6*/
 
 () => {};
 (a) => {};
@@ -80,6 +88,8 @@ a.then((foo) => { if (true) {}; });
 One benefits of this option is that it prevents the incorrect use of arrow functions in conditionals:
 
 ```js
+/*eslint-env es6*/
+
 var a = 1;
 var b = 2;
 // ...
@@ -95,6 +105,8 @@ The contents of the `if` statement is an arrow function, not a comparison.
 If the arrow function is intentional, it should be wrapped in parens to remove ambiguity.
 
 ```js
+/*eslint-env es6*/
+
 var a = 1;
 var b = 0;
 // ...
@@ -109,6 +121,8 @@ if ((a) => b) {
 The following is another example of this behavior:
 
 ```js
+/*eslint-env es6*/
+
 var a = 1, b = 2, c = 3, d = 4;
 var f = a => b ? c: d;
 // f = ?
@@ -119,6 +133,8 @@ var f = a => b ? c: d;
 This should be rewritten like so:
 
 ```js
+/*eslint-env es6*/
+
 var a = 1, b = 2, c = 3, d = 4;
 var f = (a) => b ? c: d;
 ```
@@ -126,10 +142,11 @@ var f = (a) => b ? c: d;
 
 #### "as-needed"
 
-When the rule is set to `"as-needed"` the following patterns are considered warnings:
+When the rule is set to `"as-needed"` the following patterns are considered problems:
 
 ```js
 /*eslint arrow-parens: [2, "as-needed"]*/
+/*eslint-env es6*/
 
 (a) => {};                     /*error Unexpected parentheses around single function argument*/
 (a) => a;                      /*error Unexpected parentheses around single function argument*/
@@ -139,10 +156,11 @@ a.then((foo) => a);            /*error Unexpected parentheses around single func
 a((foo) => { if (true) {}; }); /*error Unexpected parentheses around single function argument*/
 ```
 
-The following patterns are not warnings:
+The following patterns are not considered problems:
 
 ```js
 /*eslint arrow-parens: [2, "as-needed"]*/
+/*eslint-env es6*/
 
 () => {};
 a => {};

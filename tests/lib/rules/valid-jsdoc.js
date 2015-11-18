@@ -20,7 +20,8 @@ var ruleTester = new RuleTester();
 ruleTester.run("valid-jsdoc", rule, {
 
     valid: [
-
+        "/**\n* Description\n * @param {Object[]} screenings Array of screenings.\n * @param {Number} screenings[].timestamp its a time stamp \n @return {void} */\nfunction foo(){}",
+        "/**\n* Description\n */\nvar x = new Foo(function foo(){})",
         "/**\n* Description\n* @returns {void} */\nfunction foo(){}",
         "/**\n* Description\n* @returns {undefined} */\nfunction foo(){}",
         "/**\n* Description\n* @alias Test#test\n* @returns {void} */\nfunction foo(){}",
@@ -35,6 +36,8 @@ ruleTester.run("valid-jsdoc", rule, {
         "(function(){\n/**\n* Description\n* @param {string} p bar\n* @returns {string} desc */\nfunction foo(p){}\n}())",
         "var o = {\n/**\n* Description\n* @param {string} p bar\n* @returns {string} desc */\nfoo: function(p){}\n};",
         "/**\n* Description\n* @param {Object} p bar\n* @param {string[]} p.files qux\n* @param {Function} cb baz\n* @returns {void} */\nfunction foo(p, cb){}",
+        "/**\n* Description\n* @override */\nfunction foo(arg1, arg2){ return ''; }",
+        "/**\n* Description\n* @inheritdoc */\nfunction foo(arg1, arg2){ return ''; }",
         {
             code: "/**\n* Description\n* @return {void} */\nfunction foo(){}",
             options: [{}]
@@ -108,6 +111,85 @@ ruleTester.run("valid-jsdoc", rule, {
             code: "/** foo */ var foo = () => { bar(); };",
             options: [{requireReturn: false}],
             ecmaFeatures: {arrowFunctions: true}
+        },
+        {
+            code: "/**\n* Start with caps and end with period.\n* @return {void} */\nfunction foo(){}",
+            options: [{
+                "matchDescription": "^[A-Z][A-Za-z0-9\\s]*[.]$"
+            }]
+        },
+        {
+            code: "/** Foo \n@return {void} Foo\n */\nfunction foo(){}",
+            options: [{ prefer: { "return": "return" }}]
+        },
+
+        // classes
+        {
+            code:
+                "/**\n" +
+                " * Description for A.\n" +
+                " */\n" +
+                "class A {\n" +
+                "    /**\n" +
+                "     * Description for constructor.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "}",
+            options: [{requireReturn: false}],
+            ecmaFeatures: {
+                classes: true
+            }
+        },
+        {
+            code:
+                "/**\n" +
+                " * Description for A.\n" +
+                " */\n" +
+                "class A {\n" +
+                "    /**\n" +
+                "     * Description for constructor.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     * @returns {void}\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "}",
+            options: [{requireReturn: true}],
+            ecmaFeatures: {
+                classes: true
+            }
+        },
+        {
+            code:
+                "/**\n" +
+                " * Description for A.\n" +
+                " */\n" +
+                "class A {\n" +
+                "    /**\n" +
+                "     * Description for constructor.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     * @returns {void}\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "    /**\n" +
+                "     * Description for method.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     * @returns {void}\n" +
+                "     */\n" +
+                "    print(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "}",
+            options: [],
+            ecmaFeatures: {
+                classes: true
+            }
         }
     ],
 
@@ -149,6 +231,14 @@ ruleTester.run("valid-jsdoc", rule, {
                 type: "Block"
             }, {
                 message: "Missing JSDoc @returns for function.",
+                type: "Block"
+            }]
+        },
+        {
+            code: "/** Foo \n */\nfunction foo(){}",
+            options: [{ prefer: { "returns": "return" }}],
+            errors: [{
+                message: "Missing JSDoc @return for function.",
                 type: "Block"
             }]
         },
@@ -234,6 +324,20 @@ ruleTester.run("valid-jsdoc", rule, {
             }]
         },
         {
+            code: "/**\n* Foo\n* @override\n* @param {string} a desc\n */\nfunction foo(b){}",
+            errors: [{
+                message: "Expected JSDoc for 'b' but found 'a'.",
+                type: "Block"
+            }]
+        },
+        {
+            code: "/**\n* Foo\n* @inheritdoc\n* @param {string} a desc\n */\nfunction foo(b){}",
+            errors: [{
+                message: "Expected JSDoc for 'b' but found 'a'.",
+                type: "Block"
+            }]
+        },
+        {
             code: "/**\n* Foo\n* @param {string} a desc\n*/\nfunction foo(a){var t = false; if(t) {return t;}}",
             options: [{requireReturn: false}],
             errors: [{
@@ -301,6 +405,130 @@ ruleTester.run("valid-jsdoc", rule, {
                 message: "Unexpected @returns tag; function has no return statement.",
                 type: "Block"
             }]
+        },
+        {
+            code: "/**\n* @param fields [Array]\n */\n function foo(){}",
+            errors: [
+                {
+                    message: "Missing JSDoc parameter type for 'fields'.",
+                    type: "Block"
+                },
+                {
+                    message: "Missing JSDoc @returns for function.",
+                    type: "Block"
+                }
+            ]
+        },
+        {
+            code: "/**\n* Start with caps and end with period\n* @return {void} */\nfunction foo(){}",
+            options: [{
+                "matchDescription": "^[A-Z][A-Za-z0-9\\s]*[.]$"
+            }],
+            errors: [{
+                message: "JSDoc description does not satisfy the regex pattern.",
+                type: "Block"
+            }]
+        },
+        // classes
+        {
+            code:
+                "/**\n" +
+                " * Description for A\n" +
+                " */\n" +
+                "class A {\n" +
+                "    /**\n" +
+                "     * Description for constructor\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "}",
+            options: [{
+                requireReturn: false,
+                "matchDescription": "^[A-Z][A-Za-z0-9\\s]*[.]$"
+            }],
+            errors: [
+                {
+                    message: "JSDoc description does not satisfy the regex pattern.",
+                    type: "Block"
+                },
+                {
+                    message: "JSDoc description does not satisfy the regex pattern.",
+                    type: "Block"
+                }
+            ],
+            ecmaFeatures: {
+                classes: true
+            }
+        },
+        {
+            code:
+                "/**\n" +
+                " * Description for a\n" +
+                " */\n" +
+                "var A = class {\n" +
+                "    /**\n" +
+                "     * Description for constructor.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "};",
+            options: [{
+                requireReturn: true,
+                "matchDescription": "^[A-Z][A-Za-z0-9\\s]*[.]$"
+            }],
+            errors: [
+                {
+                    message: "JSDoc description does not satisfy the regex pattern.",
+                    type: "Block"
+                },
+                {
+                    message: "Missing JSDoc @returns for function.",
+                    type: "Block"
+                }
+            ],
+            ecmaFeatures: {
+                classes: true
+            }
+        },
+        {
+            code:
+                "/**\n" +
+                " * Description for A.\n" +
+                " */\n" +
+                "class A {\n" +
+                "    /**\n" +
+                "     * Description for constructor.\n" +
+                "     * @param {object[]} xs - xs\n" +
+                "     * @returns {void}\n" +
+                "     */\n" +
+                "    constructor(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "    /**\n" +
+                "     * Description for method.\n" +
+                "     */\n" +
+                "    print(xs) {\n" +
+                "        this.a = xs;" +
+                "    }\n" +
+                "}",
+            options: [],
+            errors: [
+                {
+                    message: "Missing JSDoc @returns for function.",
+                    type: "Block"
+                },
+                {
+                    message: "Missing JSDoc for parameter 'xs'.",
+                    type: "Block"
+                }
+            ],
+            ecmaFeatures: {
+                classes: true
+            }
         }
     ]
 });

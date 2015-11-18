@@ -27,11 +27,7 @@ module.exports = {
         }
     },
     commonjs: {
-        globals: {
-            module: false,
-            require: false,
-            exports: false
-        },
+        globals: globals.commonjs,
         ecmaFeatures: {
             globalReturn: true
         }
@@ -78,11 +74,17 @@ module.exports = {
     applescript: {
         globals: globals.applescript
     },
+    nashorn: {
+        globals: globals.nashorn
+    },
     serviceworker: {
         globals: globals.serviceworker
     },
     embertest: {
         globals: globals.embertest
+    },
+    webextensions: {
+        globals: globals.webextensions
     },
     es6: {
         ecmaFeatures: {
